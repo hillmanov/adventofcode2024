@@ -67,7 +67,7 @@ if (!requestedDay && !requestedPart) {
     const readmeContent = await Bun.file(readmePath).text();
     const updatedReadme = readmeContent.replace(
       /## Timings[\s\S]*$/,
-      `## Timings\n\n${timingsTable}`
+      `## Timings\n\n\`\`\`\n${timingsTable}\n\`\`\``
     );
     await Bun.write(readmePath, updatedReadme);
   } catch (err) {
