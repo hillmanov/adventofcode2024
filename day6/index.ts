@@ -1,39 +1,39 @@
 import { readLines, inGridBounds } from "../utils";
 
-const Direction = {
-  UP: 0,
-  RIGHT: 1,
-  DOWN: 2,
-  LEFT: 3
+const dir = {
+  U: 0,
+  R: 1,
+  D: 2,
+  L: 3
 }
 
-const DirectionDeltas = {
-  [Direction.UP]: [-1, 0],
-  [Direction.RIGHT]: [0, 1],
-  [Direction.DOWN]: [1, 0],
-  [Direction.LEFT]: [0, -1]
+const delta = {
+  [dir.U]: [-1, 0],
+  [dir.R]: [0, 1],
+  [dir.D]: [1, 0],
+  [dir.L]: [0, -1]
 }
 
-const directions = [Direction.UP, Direction.RIGHT, Direction.DOWN, Direction.LEFT];
+const directions = [dir.U, dir.R, dir.D, dir.L];
 
 async function part1(): Promise<number> {
   const grid = (await readLines(__dirname + '/input.txt')).map(row => row.split(''));
-  let currentPosition = getStartingPosition(grid);
 
-  let visited = new Set<string>([currentPosition.toString()]);
-  let currentDirection = Direction.UP;
+  let currentLocation = getStartingLocation(grid);
+  let visited = new Set<string>([currentLocation.toString()]);
+  let currentDirection = dir.U;
   while (true) {
-    const nextPosition = [currentPosition[0] + DirectionDeltas[currentDirection][0], currentPosition[1] + DirectionDeltas[currentDirection][1]];
-    if (!inGridBounds(nextPosition[0], nextPosition[1], grid)) {
+    const nextLocation = [currentLocation[0] + delta[currentDirection][0], currentLocation[1] + delta[currentDirection][1]];
+    if (!inGridBounds(nextLocation[0], nextLocation[1], grid)) {
       break;
     }
 
-    if (grid[nextPosition[0]][nextPosition[1]] === "#") {
+    if (grid[nextLocation[0]][nextLocation[1]] === "#") {
       currentDirection = (currentDirection + 1) % directions.length;
     } else {
-      currentPosition = nextPosition;
+      currentLocation = nextLocation;
     }
-    visited.add(currentPosition.toString());
+    visited.add(currentLocation.toString());
   }
 
   return visited.size;
@@ -41,106 +41,72 @@ async function part1(): Promise<number> {
 
 async function part2(): Promise<number> {
   const grid = (await readLines(__dirname + '/input.txt')).map(row => row.split(''));
-  let currentPosition = getStartingPosition(grid);
 
-  let visited = new Set<string>([currentPosition.toString()]);
-  let currentDirection = Direction.UP;
+  let currentLocation = getStartingLocation(grid);
+  let visited = new Set<string>([currentLocation.toString()]);
+  let currentDirection = dir.U;
   while (true) {
-    const nextPosition = [currentPosition[0] + DirectionDeltas[currentDirection][0], currentPosition[1] + DirectionDeltas[currentDirection][1]];
-    if (!inGridBounds(nextPosition[0], nextPosition[1], grid)) {
+    const nextLocation = [currentLocation[0] + delta[currentDirection][0], currentLocation[1] + delta[currentDirection][1]];
+    if (!inGridBounds(nextLocation[0], nextLocation[1], grid)) {
       break;
     }
 
-    if (grid[nextPosition[0]][nextPosition[1]] === "#") {
+    if (grid[nextLocation[0]][nextLocation[1]] === "#") {
       currentDirection = (currentDirection + 1) % directions.length;
-      grid[currentPosition[0]][currentPosition[1]] = "C";
     } else {
-      currentPosition = nextPosition;
+      currentLocation = nextLocation;
     }
 
-    visited.add(currentPosition.toString());
+    visited.add(currentLocation.toString());
   }
 
-  // 3 possible incomplete squares:
-  // ⌞
-  // ⌝
-  // ⌜
-  const obstructions = new Set<string>();
-  for (let row = 0; row < grid.length; row++) {
-    for (let col = 0; col < grid[row].length; col++) {
-      if (grid[row][col] === "C") {
-        // Find out which incomplete square we might be dealing with
-        const topRight = searchRight(row, col, grid);
-        const bottomLeft = searchDown(row, col, grid);
-        let bottomRight: number[] | null = null;
+  const willRepeat = (obstructionLocation: number[]) => {
+    const clonedGrid = grid.map(row => row.slice());
+    clonedGrid[obstructionLocation[0]][obstructionLocation[1]] = "#";
 
-        if (!topRight && !bottomLeft) {
-          continue;
-        }
+    let currentLocation = getStartingLocation(clonedGrid);
+    let currentDirection = dir.U;
+    const visited = new Set<string>([s(currentLocation, currentDirection)]);
 
-        if (topRight && !bottomLeft) { // Possibly a ⌝
-          bottomRight = searchDown(row, topRight[1], grid);
-        }
-        if (!topRight && bottomLeft) { // Possibly a ⌞
-          bottomRight = searchRight(bottomLeft[0], col, grid);
-        }
-        
-        if (topRight && bottomLeft) { // Dealing with a  ⌜
-          const bottomRightObstructionPosition = [bottomLeft[0]+1, topRight[1]];
-          if (!inGridBounds(bottomRightObstructionPosition[0], bottomRightObstructionPosition[1], grid)) {
-            continue;
-          }
-          if (grid[bottomRightObstructionPosition[0]][bottomRightObstructionPosition[1]] === ".") {
-            obstructions.add(bottomRightObstructionPosition.toString());
-          }
-        }
-        if (topRight && bottomRight) { // Dealing with a ⌝
-          const bottomLeftObstructionPosition = [bottomRight[0], col-1];
-          if (!inGridBounds(bottomLeftObstructionPosition[0], bottomLeftObstructionPosition[1], grid)) {
-            continue;
-          }
-          if (grid[bottomLeftObstructionPosition[0]][bottomLeftObstructionPosition[1]] === ".") {
-            obstructions.add(bottomLeftObstructionPosition.toString());
-          }
-        }
-        if (bottomLeft && bottomRight) { // Dealing with a ⌞
-          const topRightObstructionPosition = [row, col+1];
-          if (!inGridBounds(topRightObstructionPosition[0], topRightObstructionPosition[1], grid)) {
-            continue;
-          }
-          if (grid[topRightObstructionPosition[0]][topRightObstructionPosition[1]] === ".") {
-            obstructions.add(topRightObstructionPosition.toString());
-          }
-        }
+    while (true) {
+      const nextLocation = [currentLocation[0] + delta[currentDirection][0], currentLocation[1] + delta[currentDirection][1]];
+      if (!inGridBounds(nextLocation[0], nextLocation[1], clonedGrid)) {
+        return false;
       }
+
+      if (clonedGrid[nextLocation[0]][nextLocation[1]] === "#") {
+        currentDirection = (currentDirection + 1) % directions.length;
+      } else {
+        currentLocation = nextLocation;
+      }
+
+      if (visited.has(s(currentLocation, currentDirection))) {
+        return true;
+      }
+
+      visited.add(s(currentLocation, currentDirection));
+    }
+  }
+
+  const obstructions = new Set<string>();
+  for (let _location of visited.values()) {
+    let location = _location.split(',').map(n => parseInt(n, 10));
+    if (willRepeat(location)) {
+      obstructions.add(location.toString());
     }
   }
 
   return obstructions.size;
 }
 
-function searchRight(row: number, col: number, grid: string[][]): number[] | null {
-  for (let currentCol = col+1; currentCol < grid[row].length; currentCol++) {
-    if (grid[row][currentCol] === "C") {
-      return [row, currentCol];
-    }
-  }
-  return null;
+function getStartingLocation(grid: string[][]): number[] {
+  let currentLocation: number[] = [];
+  grid.forEach((row, rowIndex) => row.forEach((col, colIndex) => { if (col === "^") { currentLocation = [rowIndex, colIndex] } }));
+  return currentLocation;
 }
 
-function searchDown(row: number, col: number, grid: string[][]): number[] | null {
-  for (let currentRow = row+1; currentRow < grid.length; currentRow++) {
-    if (grid[currentRow][col] === "C") {
-      return [currentRow, col];
-    }
-  }
-  return null;
-}
-
-function getStartingPosition(grid: string[][]): number[] {
-  let currentPosition: number[] = [];
-  grid.forEach((row, rowIndex) => row.forEach((col, colIndex) => { if (col === "^") { currentPosition = [rowIndex, colIndex] } }));
-  return currentPosition;
+function s(location : number[], direction: number) {
+  return location.toString() + "," + direction.toString();
 }
 
 export {
