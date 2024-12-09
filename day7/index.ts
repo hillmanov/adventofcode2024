@@ -72,8 +72,7 @@ function evaluate(numbers: number[], targetValue: number, doConcat: boolean = fa
     }
 
     if (doConcat) {
-      const concatenationVal = parseInt(String(currentValue) + String(operand), 10);
-      const concatenationResult = e(numberIndex + 1, concatenationVal);
+      const concatenationResult = e(numberIndex + 1, concatValue(currentValue, operand));
       if (concatenationResult === targetValue) {
         return concatenationResult;
       }
@@ -83,6 +82,11 @@ function evaluate(numbers: number[], targetValue: number, doConcat: boolean = fa
   }
 
   return e(1, numbers[0]);
+}
+
+function concatValue(left: number, right: number): number {
+  const digits = right === 0 ? 1 : Math.floor(Math.log10(right)) + 1;
+  return left * (10 ** digits) + right;
 }
 
 export {
