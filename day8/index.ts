@@ -117,7 +117,12 @@ async function getInput(): Promise<string[][]> {
   return (await readLines(__dirname + '/input.txt')).map(l => l.split(''));
 }
 
+const part1Answer = 271;
+const part2Answer = 994;
+
 export {
   part1,
   part2,
+  part1Answer,
+  part2Answer,
 }

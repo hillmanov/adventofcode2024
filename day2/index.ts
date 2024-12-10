@@ -62,7 +62,12 @@ async function getInput(): Promise<number[][]> {
   return numbers;
 }
 
+const part1Answer = 321;
+const part2Answer = 386;
+
 export {
   part1,
   part2,
+  part1Answer,
+  part2Answer,
 }

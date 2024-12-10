@@ -43,7 +43,12 @@ async function part2(): Promise<number> {
   return totalDistance;
 }
 
+const part1Answer = 3574690;
+const part2Answer = 22565391;
+
 export {
   part1,
   part2,
+  part1Answer,
+  part2Answer,
 }

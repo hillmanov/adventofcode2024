@@ -109,7 +109,12 @@ function getNextMove(row: number, col: number, direction: Direction, grid: strin
   }
 }
 
+const part1Answer = 2427;
+const part2Answer = 1900;
+
 export {
   part1,
-  part2
-};
+  part2,
+  part1Answer,
+  part2Answer,
+}

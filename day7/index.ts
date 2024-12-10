@@ -89,7 +89,12 @@ function concatValue(left: number, right: number): number {
   return left * (10 ** digits) + right;
 }
 
+const part1Answer = 2664460013123;
+const part2Answer = 426214131924213;
+
 export {
   part1,
-  part2
-};
+  part2,
+  part1Answer,
+  part2Answer,
+}

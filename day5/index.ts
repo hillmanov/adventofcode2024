@@ -103,7 +103,12 @@ async function initialize(): Promise<{beforeRules: Map<number, Set<number>>, aft
   }
 }
 
+const part1Answer = 5639;
+const part2Answer = 5273;
+
 export {
   part1,
-  part2
-};
+  part2,
+  part1Answer,
+  part2Answer,
+}

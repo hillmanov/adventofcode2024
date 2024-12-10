@@ -114,7 +114,13 @@ function encode(location : number[], direction: number): number {
   return location[0] << 12 | location[1] << 4 | direction;
 }
 
+const part1Answer = 5239;
+const part2Answer = 1753;
+
 export {
   part1,
-  part2
-};
+  part2,
+  part1Answer,
+  part2Answer,
+}
+

@@ -21,21 +21,31 @@ for (const entry of entries) {
 
     try {
       const module = await import(dayPath);
-      const { part1, part2 } = module;
+      const { part1, part2, part1Answer, part2Answer } = module;
 
-      const dayResult = { day: dayName, part1: null as any, part1Time: NaN, part2: null as any, part2Time: NaN };
+      const dayResult = {
+        day: dayName,
+        part1: null as any,
+        part1Time: 0,
+        part1Correct: null as any,
+        part2: null as any,
+        part2Time: 0,
+        part2Correct: null as any,
+      };
 
       // If a specific part is requested, only run that part
       if ((!requestedPart || requestedPart === "part1") && typeof part1 === "function") {
         const start = performance.now();
         dayResult.part1 = await part1();
         dayResult.part1Time = performance.now() - start;
+        dayResult.part1Correct = part1Answer ? dayResult.part1 === part1Answer : null;
       }
 
       if ((!requestedPart || requestedPart === "part2") && typeof part2 === "function") {
         const start = performance.now();
         dayResult.part2 = await part2();
         dayResult.part2Time = performance.now() - start;
+        dayResult.part2Correct = part2Answer ? dayResult.part2 === part2Answer : null;
       }
 
       results.push(dayResult);
@@ -49,14 +59,14 @@ for (const entry of entries) {
 results.sort((a, b) => a.day - b.day);
 
 const timingsTable = Bun.inspect.table(
-  results.map(({ day, part1, part1Time, part2, part2Time }) => ({
+  results.map(({ day, part1, part1Time, part2, part2Time, part1Correct, part2Correct }) => ({
     "Day": day,
-    "Part 1": part1,
-    "Part 1 Time (ms)": !isNaN(part1Time) ? part1Time.toFixed(4) : "",
-    "Part 2": part2,
-    "Part 2 Time (ms)": !isNaN(part2Time) ? part2Time.toFixed(4) : "",
+    "Part 1": `${part1Correct !== null ? part1Correct ? "✅" : "❌" : ""} ${part1}`,
+    "Part 1 Time (ms)": !isNaN(part1Time) ? part1Time.toFixed(3) : "",
+    "Part 2": `${part2Correct !== null ? part2Correct ? "✅" : "❌" : ""} ${part2}`,
+    "Part 2 Time (ms)": !isNaN(part2Time) ? part2Time.toFixed(3) : "",
     "Total Time (ms)": (!isNaN(part1Time) && !isNaN(part2Time))
-      ? (part1Time + part2Time).toFixed(4)
+      ? (part1Time + part2Time).toFixed(3)
       : "",
   }))
 );

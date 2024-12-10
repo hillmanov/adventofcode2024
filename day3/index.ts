@@ -33,7 +33,12 @@ async function part2(): Promise<number> {
   return sum;
 }
 
+const part1Answer = 160672468;
+const part2Answer = 84893551;
+
 export {
   part1,
   part2,
+  part1Answer,
+  part2Answer,
 }
