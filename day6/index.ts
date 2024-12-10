@@ -1,4 +1,4 @@
-import { readLines, inGridBounds } from "../utils";
+import { readLines, inGridBounds } from "../io";
 
 const dir = {
   U: 0,

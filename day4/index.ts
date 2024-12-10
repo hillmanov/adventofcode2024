@@ -1,4 +1,4 @@
-import { readLines } from "../utils";
+import { readLines } from "../io";
 
 enum Direction {
   UP = 0,
