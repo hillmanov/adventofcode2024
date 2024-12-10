@@ -20,7 +20,7 @@ async function part1(): Promise<number> {
   const grid = (await readLines(__dirname + '/input.txt')).map(row => row.split(''));
 
   let currentLocation = getStartingLocation(grid);
-  let visited = new Set<string>([currentLocation.toString()]);
+  let visited = new Set<number>([encode(currentLocation, 0)]);
   let currentDirection = dir.U;
   while (true) {
     const nextLocation = [currentLocation[0] + delta[currentDirection][0], currentLocation[1] + delta[currentDirection][1]];
@@ -33,7 +33,7 @@ async function part1(): Promise<number> {
     } else {
       currentLocation = nextLocation;
     }
-    visited.add(currentLocation.toString());
+    visited.add(encode(currentLocation, 0))
   }
 
   return visited.size;
@@ -41,10 +41,10 @@ async function part1(): Promise<number> {
 
 async function part2(): Promise<number> {
   const grid = (await readLines(__dirname + '/input.txt')).map(row => row.split(''));
-
   let currentLocation = getStartingLocation(grid);
-  let visited = new Set<string>([currentLocation.toString()]);
+  let path : { location: number[], direction: number }[] = [];
   let currentDirection = dir.U;
+
   while (true) {
     const nextLocation = [currentLocation[0] + delta[currentDirection][0], currentLocation[1] + delta[currentDirection][1]];
     if (!inGridBounds(nextLocation[0], nextLocation[1], grid)) {
@@ -57,42 +57,40 @@ async function part2(): Promise<number> {
       currentLocation = nextLocation;
     }
 
-    visited.add(currentLocation.toString());
+    path.push({ location: currentLocation, direction: currentDirection });
   }
 
-  const willRepeat = (obstructionLocation: number[]) => {
-    const clonedGrid = grid.map(row => row.slice());
-    clonedGrid[obstructionLocation[0]][obstructionLocation[1]] = "#";
-
-    let currentLocation = getStartingLocation(clonedGrid);
+  const _startLocation = getStartingLocation(grid);
+  const willRepeat = (startLocation: number[], startDirection: number, obstructionLocation: number[]) => {
+    let currentLocation = _startLocation.slice();
     let currentDirection = dir.U;
-    const visited = new Set<string>([s(currentLocation, currentDirection)]);
+
+    const visited = new Set<number>([encode(currentLocation, currentDirection)]);
 
     while (true) {
       const nextLocation = [currentLocation[0] + delta[currentDirection][0], currentLocation[1] + delta[currentDirection][1]];
-      if (!inGridBounds(nextLocation[0], nextLocation[1], clonedGrid)) {
+      if (!inGridBounds(nextLocation[0], nextLocation[1], grid)) {
         return false;
       }
 
-      if (clonedGrid[nextLocation[0]][nextLocation[1]] === "#") {
+      if (grid[nextLocation[0]][nextLocation[1]] === "#" || (obstructionLocation[0] === nextLocation[0] && obstructionLocation[1] === nextLocation[1])) {
         currentDirection = (currentDirection + 1) % directions.length;
       } else {
         currentLocation = nextLocation;
       }
 
-      if (visited.has(s(currentLocation, currentDirection))) {
+      if (visited.has(encode(currentLocation, currentDirection))) {
         return true;
       }
 
-      visited.add(s(currentLocation, currentDirection));
+      visited.add(encode(currentLocation, currentDirection));
     }
   }
 
-  const obstructions = new Set<string>();
-  for (let _location of visited.values()) {
-    let location = _location.split(',').map(n => parseInt(n, 10));
-    if (willRepeat(location)) {
-      obstructions.add(location.toString());
+  const obstructions = new Set<number>();
+  for (let i = 0; i < path.length - 1; i++) {
+    if (willRepeat(path[i].location, path[i].direction, path[i + 1].location)) {
+      obstructions.add(encode(path[i + 1].location, 0));
     }
   }
 
@@ -101,12 +99,19 @@ async function part2(): Promise<number> {
 
 function getStartingLocation(grid: string[][]): number[] {
   let currentLocation: number[] = [];
-  grid.forEach((row, rowIndex) => row.forEach((col, colIndex) => { if (col === "^") { currentLocation = [rowIndex, colIndex] } }));
+  for (let row = 0; row < grid.length; row++) {
+    for (let col = 0; col < grid[row].length; col++) {
+      if (grid[row][col] === "^") {
+        currentLocation = [row, col];
+        break;
+      }
+    }
+  }
   return currentLocation;
 }
 
-function s(location : number[], direction: number) {
-  return location.toString() + "," + direction.toString();
+function encode(location : number[], direction: number): number {
+  return location[0] << 12 | location[1] << 4 | direction;
 }
 
 export {
