@@ -1,4 +1,4 @@
-import { readContents } from "../io";
+import { readContents } from "../utils/io";
 
 async function part1(): Promise<number> {
   const { beforeRules, afterRules, orders } = await initialize();

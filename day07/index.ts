@@ -1,4 +1,4 @@
-import { readLines } from "../io";
+import { readLines } from "../utils/io";
 
 type Equation = {
   value: number;

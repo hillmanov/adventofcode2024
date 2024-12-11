@@ -1,4 +1,4 @@
-import { readLines } from  "../io";
+import { readLines } from  "../utils/io";
 
 async function part1(): Promise<number> {
   const lines = await readLines(__dirname + "/input.txt");
