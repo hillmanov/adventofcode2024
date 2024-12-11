@@ -11,7 +11,7 @@ const PEAK = 9;
 
 async function part1(): Promise<number> {
   const topographicMap = await getInput();
-  const startingPositions: Point[] = topographicMap.map((_, row) => topographicMap[row].map((_, col) => topographicMap[row][col] === 0 ? { row, col } : null)).flat().filter((p) => p !== null);
+  const startingPositions = getStartingPositions(topographicMap);
 
   const climb = (p: Point, currentHeight: number, peaks: Set<number>): void => {
     const height = valueAt(topographicMap, p);
@@ -42,7 +42,7 @@ async function part1(): Promise<number> {
 
 async function part2(): Promise<number> {
   const topographicMap = await getInput();
-  const startingPositions: Point[] = topographicMap.map((_row, row) => _row.map((_cell, col) => _cell === 0 ? { row, col } : null)).flat().filter((p) => p !== null);
+  const startingPositions = getStartingPositions(topographicMap);
   const successfulPaths: number[][] = [];
 
   const climb = (p: Point, currentHeight: number, path: number[]): void => {
@@ -76,6 +76,10 @@ async function part2(): Promise<number> {
 
 function hashPath(path: number[]): number {
   return path.reduce((hash, p) => (hash * 31 + p), 0); // Random prime number to help reduce collisions
+}
+
+function getStartingPositions(topographicMap: number[][]): Point[] {
+  return topographicMap.map((_, row) => topographicMap[row].map((_, col) => topographicMap[row][col] === 0 ? { row, col } : null)).flat().filter((p) => p !== null);
 }
 
 async function getInput(): Promise<number[][]> {
