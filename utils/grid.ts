@@ -54,10 +54,7 @@ export function move(p: Point, d: DIRECTION): void {
 }
 
 export function valueAt<T>(grid: T[][], p: Point): (T | null) {
-  if (inGridBounds(p, grid)) {
-    return grid[p.row][p.col];
-  }
-  return null;
+  return grid[p.row]?.[p.col] ?? null;
 }
 
 export function walkGrid<T>(grid: T[][], callback: (value: T, row: number, col: number) => void) {
