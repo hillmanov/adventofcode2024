@@ -10,6 +10,8 @@ import {
   type Point, 
 } from "../utils/grid";
 
+const NO_DIRECTION = DIRECTION.U;
+
 const directions = [DIRECTION.U, DIRECTION.R, DIRECTION.D, DIRECTION.L];
 
 async function part1(): Promise<number> {
@@ -45,6 +47,7 @@ async function part2(): Promise<number> {
   let path : { location: Point, direction: DIRECTION }[] = [];
   let currentDirection = DIRECTION.U;
   const nextLocation = copyPoint(currentLocation);
+  const firstPreviousLocation = new Map<number, { location: Point, direction: DIRECTION }>();
 
   while (true) {
     move(nextLocation, currentDirection);
@@ -59,6 +62,11 @@ async function part2(): Promise<number> {
       setPointTo(nextLocation, currentLocation);
       path[path.length - 1].direction = currentDirection;
     } else {
+
+      const encodedState = encode(nextLocation, 0);
+      if (!firstPreviousLocation.has(encodedState)) {
+        firstPreviousLocation.set(encodedState, { location: copyPoint(currentLocation), direction: currentDirection });
+      }
       setPointTo(currentLocation, nextLocation);
       path.push({ location: copyPoint(currentLocation), direction: currentDirection });
     }
@@ -94,7 +102,9 @@ async function part2(): Promise<number> {
   // Figured out what is going on. I need to start at the location that was visited the first time before the obstruction's location. Not just the previous step. 
   const obstructions = new Set<number>();
   for (let i = 0; i < path.length - 1; i++) {
-    if (willRepeat(path[0].location, path[0].direction, path[i + 1].location, new Set<number>([]))) {
+    const obstruction = path[i + 1]
+    const previousLocation = firstPreviousLocation.get(encode(obstruction.location, NO_DIRECTION))!;
+    if (willRepeat(previousLocation.location, previousLocation.direction, obstruction.location, new Set<number>([]))) {
       obstructions.add(encode(path[i + 1].location, 0));
     }
   }
@@ -115,6 +125,13 @@ function getStartingLocation(grid: string[][]): Point {
 
 function encode(p: Point, direction: number): number {
   return p.row << 12 | p.col << 4 | direction;
+}
+
+function decode(encoded: number): { location: Point, direction: number } {
+  const row = (encoded >> 12) & 0xFFFFF; 
+  const col = (encoded >> 4) & 0xFF;     
+  const direction = encoded & 0xF;      
+  return { location: { row, col }, direction };
 }
 
 const part1Answer = 5239;

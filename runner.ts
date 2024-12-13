@@ -24,8 +24,6 @@ const { values } = parseArgs({
   allowPositionals: true,
 });
 
-console.log(`values`, values);
-
 type DayResult = {
   day: number;
   part1: any;
@@ -54,8 +52,6 @@ dayFolders.sort((a, b) => {
 });
 
 const results = [];
-
-console.log(`requestedDay, requestedPart, iterations, timingStrategy`, requestedDay, requestedPart, iterations, timingStrategy);
 
 for (const dayFolder of dayFolders) {
     const dayNumber = Number(dayFolder.name.replace("day", ""));
@@ -107,7 +103,9 @@ for (const dayFolder of dayFolders) {
       }
 
       results.push(dayResult);
-      printTimingsTable(results);
+      if (!requestedDay && !requestedPart) {
+        printTimingsTable(results);
+      }
     } catch (err) {
       console.error(`Error loading or running ${dayFolder.name}:`, err);
     }
@@ -133,7 +131,7 @@ function getTiming(results: number[], timingStrategy: string = "min") {
 
 function getTimingsTable(results: DayResult[]) {
   const data = [{
-    row: ["Day", "Answers", "Timing (ms)", "Total Time (ms)"],
+    row: ["Day", "Part", "Answer", "Time (ms)", "Total Time (ms)"],
     type: 'header',
   }]
   
@@ -141,9 +139,10 @@ function getTimingsTable(results: DayResult[]) {
     return [
       {
         row: [
-          `Day ${day}`, 
-          `Part 1: ${part1Correct !== null ? part1Correct ? "✅" : "❌" : "❓"} ${part1}${part1Correct === false ? " (expected: " + part1Answer + ")" : ""}`, 
-          `Part 1: ${!isNaN(part1Time) ? part1Time.toFixed(3) : "N/A"}`, 
+          `Day ${day}`,
+          "Part 1",
+          `${part1Correct !== null ? part1Correct ? "✅" : "❌" : "❓"} ${part1}${part1Correct === false ? " (expected: " + part1Answer + ")" : ""}`, 
+          `${!isNaN(part1Time) ? part1Time.toFixed(3) : "N/A"}`, 
           (!isNaN(part1Time) && !isNaN(part2Time)) ? (part1Time + part2Time).toFixed(3) : "N/A",
         ],
         type: 'day',
@@ -152,8 +151,9 @@ function getTimingsTable(results: DayResult[]) {
         row:
         [
           "", 
-          `Part 2: ${part2Correct !== null ? part2Correct ? "✅" : "❌" : "❓"} ${part2}${part2Correct === false ? " (expected: " + part2Answer + ")" : ""}`, 
-          `Part 2: ${!isNaN(part2Time) ? part2Time.toFixed(3) : "N/A"}`, ""
+          "Part 2",
+          `${part2Correct !== null ? part2Correct ? "✅" : "❌" : "❓"} ${part2}${part2Correct === false ? " (expected: " + part2Answer + ")" : ""}`, 
+          `${!isNaN(part2Time) ? part2Time.toFixed(3) : "N/A"}`, ""
         ],
         type: ''
       }
@@ -164,7 +164,8 @@ function getTimingsTable(results: DayResult[]) {
     columns: [
       { alignment: 'center', width: 10 },
       { alignment: 'left' },
-      { alignment: 'left' },
+      { alignment: 'right' },
+      { alignment: 'right' },
       { alignment: 'center' },
     ],
     spanningCells: data.reduce((acc, row, index) => {
@@ -175,7 +176,7 @@ function getTimingsTable(results: DayResult[]) {
           rowSpan: 2,
           verticalAlignment: 'middle'
         }, {
-          col: 3,
+          col: 4,
           row: index,
           rowSpan: 2,
           verticalAlignment: 'middle'
