@@ -1,29 +1,74 @@
 import path from "path";
 import { performance } from "perf_hooks";
 import { readdir } from "node:fs/promises";
+import { parseArgs } from "util";
+import { table } from 'table';
 
-const args = process.argv.slice(2);
+const { values } = parseArgs({
+  args: Bun.argv,
+  options: {
+    day: {
+      type: 'string',
+    },
+    part: {
+      type: 'string',
+    },
+    iterations: {
+      type: 'string',
+    },
+    timing: {
+      type: 'string',
+    }
+  },
+  strict: true,
+  allowPositionals: true,
+});
 
-const requestedDay = Number(args[0]?.replace("day", ""));
-const requestedPart = Number(args[1]?.replace("part", ""));
+console.log(`values`, values);
+
+type DayResult = {
+  day: number;
+  part1: any;
+  part1Time: number;
+  part1Answer: any;
+  part1Correct: boolean | null;
+  part2: any;
+  part2Time: number;
+  part2Answer: any;
+  part2Correct: boolean | null;
+}
+
+const requestedDay = values.day ? Number(values.day) : null;
+const requestedPart = values.part ? Number(values.part) : null;
+const iterations = values.iterations ? Number(values.iterations) : 1;
+const timingStrategy = values.timing ?? "min";
 
 const directory = import.meta.dir;
 const entries = await readdir(directory, { withFileTypes: true });
+const dayFolders = entries.filter((entry) => entry.isDirectory() && entry.name.startsWith("day"));
+
+dayFolders.sort((a, b) => {
+  const dayA = Number(a.name.replace("day", ""));
+  const dayB = Number(b.name.replace("day", ""));
+  return dayA - dayB;
+});
+
 const results = [];
 
-for (const entry of entries) {
-  if (entry.isDirectory() && entry.name.startsWith("day")) {
-    const dayNumber = Number(entry.name.replace("day", ""));
+console.log(`requestedDay, requestedPart, iterations, timingStrategy`, requestedDay, requestedPart, iterations, timingStrategy);
+
+for (const dayFolder of dayFolders) {
+    const dayNumber = Number(dayFolder.name.replace("day", ""));
 
     if (requestedDay && requestedDay !== dayNumber) continue;
 
-    const dayPath = path.join(directory, entry.name);
+    const dayPath = path.join(directory, dayFolder.name);
 
     try {
       const module = await import(dayPath);
       const { part1, part2, part1Answer, part2Answer } = module;
 
-      const dayResult = {
+      const dayResult: DayResult = {
         day: dayNumber,
         part1: null as any,
         part1Time: 0,
@@ -35,60 +80,122 @@ for (const entry of entries) {
         part2Correct: null as any,
       };
 
-      // If a specific part is requested, only run that part
       if ((!requestedPart || requestedPart === 1) && typeof part1 === "function") {
-        // Run part1 a few times to get a more accurate average time
         const runtimes = [];
-
-        for (let i = 0; i < 1; i++) {
+        for (let i = 0; i < iterations; i++) {
           const start = performance.now();
           dayResult.part1 = await part1();
           runtimes.push(performance.now() - start);
         }
 
-        dayResult.part1Time = runtimes.reduce((a, b) => a + b, 0) / runtimes.length;
-
+        dayResult.part1Time = getTiming(runtimes, timingStrategy);
         dayResult.part1Correct = part1Answer ? dayResult.part1 === part1Answer : null;
         dayResult.part1Answer = part1Answer;
       }
 
       if ((!requestedPart || requestedPart === 2) && typeof part2 === "function") {
         const runtimes = [];
-
-        for (let i = 0; i < 1; i++) {
+        for (let i = 0; i < iterations; i++) {
           const start = performance.now();
           dayResult.part2 = await part2();
           runtimes.push(performance.now() - start);
         }
 
-        dayResult.part2Time = runtimes.reduce((a, b) => a + b, 0) / runtimes.length;
+        dayResult.part2Time = getTiming(runtimes, timingStrategy);
         dayResult.part2Correct = part2Answer ? dayResult.part2 === part2Answer : null;
         dayResult.part2Answer = part2Answer;
       }
 
       results.push(dayResult);
+      printTimingsTable(results);
     } catch (err) {
-      console.error(`Error loading or running ${entry.name}:`, err);
+      console.error(`Error loading or running ${dayFolder.name}:`, err);
     }
+}
+
+function getTiming(results: number[], timingStrategy: string = "min") {
+  switch (timingStrategy) {
+    case "min":
+      return Math.min(...results);
+    case "max":
+      return Math.max(...results);
+    case "average":
+      return results.reduce((a: number, b: number) => a + b, 0) / results.length;
+    case "median":
+      const sorted = results.sort();
+      const middle = Math.floor(sorted.length / 2);
+      return sorted.length % 2 === 0
+        ? (sorted[middle - 1] + sorted[middle]) / 2
+        : sorted[middle];
+    default: return Math.min(...results);
   }
 }
 
-results.sort((a, b) => a.day - b.day);
+function getTimingsTable(results: DayResult[]) {
+  const data = [{
+    row: ["Day", "Answers", "Timing (ms)", "Total Time (ms)"],
+    type: 'header',
+  }]
+  
+  data.push(...results.flatMap(({ day, part1, part1Time, part2, part2Time, part1Correct, part2Correct, part1Answer, part2Answer }) => {
+    return [
+      {
+        row: [
+          `Day ${day}`, 
+          `Part 1: ${part1Correct !== null ? part1Correct ? "✅" : "❌" : "❓"} ${part1}${part1Correct === false ? " (expected: " + part1Answer + ")" : ""}`, 
+          `Part 1: ${!isNaN(part1Time) ? part1Time.toFixed(3) : "N/A"}`, 
+          (!isNaN(part1Time) && !isNaN(part2Time)) ? (part1Time + part2Time).toFixed(3) : "N/A",
+        ],
+        type: 'day',
+      },
+      {
+        row:
+        [
+          "", 
+          `Part 2: ${part2Correct !== null ? part2Correct ? "✅" : "❌" : "❓"} ${part2}${part2Correct === false ? " (expected: " + part2Answer + ")" : ""}`, 
+          `Part 2: ${!isNaN(part2Time) ? part2Time.toFixed(3) : "N/A"}`, ""
+        ],
+        type: ''
+      }
+    ];
+  }));
 
-const timingsTable = Bun.inspect.table(
-  results.map(({ day, part1, part1Time, part2, part2Time, part1Correct, part2Correct, part1Answer, part2Answer }) => ({
-    "Day": day,
-    "Part 1": `${part1Correct !== null ? part1Correct ? "✅" : "❌" : "❓"} ${part1}${part1Correct === false ? " (expected: " + part1Answer + ")" : ""}`,
-    "Part 1 Time (ms)": !isNaN(part1Time) ? part1Time.toFixed(3) : "",
-    "Part 2": `${part2Correct !== null ? part2Correct ? "✅" : "❌" : "❓"} ${part2}${part2Correct === false ? " (expected: " + part2Answer + ")" : ""}`,
-    "Part 2 Time (ms)": !isNaN(part2Time) ? part2Time.toFixed(3) : "",
-    "Total Time (ms)": (!isNaN(part1Time) && !isNaN(part2Time))
-      ? (part1Time + part2Time).toFixed(3)
-      : "",
-  }))
-);
+  const config = {
+    columns: [
+      { alignment: 'center', width: 10 },
+      { alignment: 'left' },
+      { alignment: 'left' },
+      { alignment: 'center' },
+    ],
+    spanningCells: data.reduce((acc, row, index) => {
+      if (row.type === 'day') {
+        acc.push(...[{
+          col: 0,
+          row: index,
+          rowSpan: 2,
+          verticalAlignment: 'middle'
+        }, {
+          col: 3,
+          row: index,
+          rowSpan: 2,
+          verticalAlignment: 'middle'
+        }
+        ]);
+      }
+      return acc;
+    }, [] as any[])
+  };
+  const tableOutput = table(data.map(d => d.row), config);
+  return tableOutput;
+}
+
+function printTimingsTable(results) {
+  console.clear();
+  console.log(getTimingsTable(results));
+}
 
 if (!requestedDay && !requestedPart) {
+  const timingsTable = getTimingsTable(results);
   const readmePath = path.join(directory, "README.md");
   try {
     const readmeContent = await Bun.file(readmePath).text();
@@ -102,4 +209,4 @@ if (!requestedDay && !requestedPart) {
   }
 }
 
-console.log(timingsTable);
+printTimingsTable(results);
