@@ -17,24 +17,27 @@ async function part2(): Promise<number> {
 }
 
 function getStoneCountAfterBlinks(stones: stone[], stoneTransformations: Map<stone, output>, blinks: number): number {
-  let currentStoneCounts = new Map<stone, number>(stones.map((stone) => [stone, 1]));
+  // Initialize counts
+  let stoneCounts = new Map<stone, number>();
+  for (let stone of stones) {
+    stoneCounts.set(stone, (stoneCounts.get(stone) || 0) + 1);
+  }
 
   times(blinks, () => {
     const nextStoneCounts = new Map<stone, number>();
-
-    for (let [stone, count] of currentStoneCounts) {
+    for (let [stone, count] of stoneCounts) {
       const output = stoneTransformations.get(stone)!;
       for (let i = 0; i < output.length; i++) {
-        const nextStone = output[i];
-        nextStoneCounts.set(nextStone, (nextStoneCounts.get(nextStone) || 0) + count);
+        const outStone = output[i];
+        nextStoneCounts.set(outStone, (nextStoneCounts.get(outStone) || 0) + count);
       }
     }
 
-    currentStoneCounts = nextStoneCounts;
+    stoneCounts = nextStoneCounts;
   });
 
   let totalStones = 0;
-  for (let count of currentStoneCounts.values()) {
+  for (let count of stoneCounts.values()) {
     totalStones += count;
   }
 
@@ -93,4 +96,3 @@ export {
   part1Answer,
   part2Answer,
 }
-
