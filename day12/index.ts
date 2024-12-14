@@ -1,12 +1,22 @@
-import { readContents } from "../utils/io";
+import { readLines } from "../utils/io";
+
+type plant = string;
+type garden = plant[][];
 
 async function part1(): Promise<number> {
-  // Have a "visit next" set - when looking for a current match, whenever you reach a new letter, add it to the "visit next" set. Once we have exhausted the current set, start on the "visit next". Be sure to always check to see if if have visited it yet though!
+  const garden = await getInput();
+
+
+
   return 0;
 }
 
 async function part2(): Promise<number> {
   return 0;
+}
+
+async function getInput(): Promise<garden> {
+  return (await readLines(__dirname + "/input.txt")).map((l) => l.split(""))
 }
 
 const part1Answer = null;
