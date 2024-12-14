@@ -12,7 +12,7 @@ async function part1(): Promise<number> {
   const map = await getInput();
   const frequencyLocations = new Map<string, Point[]>();
 
-  walkGrid<string>(map, (value, row, col) => {
+  walkGrid<string>(map, (value, point) => {
     if (value === '.') {
       return;
     }
@@ -20,7 +20,7 @@ async function part1(): Promise<number> {
       frequencyLocations.set(value, []);
     }
 
-    frequencyLocations.get(value)!.push({ row, col });
+    frequencyLocations.get(value)!.push(point);
   });
 
   const uniqueAntinodeLocations = new Set<number>();
@@ -57,7 +57,7 @@ async function part2(): Promise<number> {
   const map = await getInput();
   const frequencyLocations = new Map<string, Point[]>();
 
-  walkGrid<string>(map, (value, row, col) => {
+  walkGrid<string>(map, (value, point) => {
     if (value === '.') {
       return;
     }
@@ -65,7 +65,7 @@ async function part2(): Promise<number> {
       frequencyLocations.set(value, []);
     }
 
-    frequencyLocations.get(value)!.push({ row, col });
+    frequencyLocations.get(value)!.push(point);
   });
 
   const antinodeLocations = new Map<string, number[]>();

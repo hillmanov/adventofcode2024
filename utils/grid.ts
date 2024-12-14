@@ -28,6 +28,7 @@ export const Delta = {
 
 export const ORTHOGONAL_DIRECTIONS = [DIRECTION.U, DIRECTION.R, DIRECTION.D, DIRECTION.L];
 export const OMNI_DIRECTIONS = [DIRECTION.U, DIRECTION.R, DIRECTION.D, DIRECTION.L, DIRECTION.UR, DIRECTION.DR, DIRECTION.DL, DIRECTION.UL];
+export const DIAGONAL_DIRECTIONS = [DIRECTION.UR, DIRECTION.DR, DIRECTION.DL, DIRECTION.UL];
 
 export function goAmount(p: Point, d: DIRECTION, rowAmount: number, colAmount: number): Point {
   const delta = Delta[d];
@@ -57,10 +58,10 @@ export function valueAt<T>(grid: T[][], p: Point): (T | null) {
   return grid[p.row]?.[p.col] ?? null;
 }
 
-export function walkGrid<T>(grid: T[][], callback: (value: T, row: number, col: number) => void) {
+export function walkGrid<T>(grid: T[][], callback: (value: T, point: Point) => void) {
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
-      callback(grid[row][col], row, col);
+      callback(grid[row][col], { row, col })
     }
   }
 }
@@ -71,6 +72,10 @@ export function inGridBounds(p: Point, grid: any[][]): boolean {
 
 export function encode(p: Point): number {
   return p.row << 12 | p.col;
+}
+
+export function decode(n: number): Point {
+  return { row: n >> 12, col: n & 0xFFF };
 }
 
 export function pointsAreEqual(p1: Point, p2: Point): boolean {
