@@ -191,7 +191,9 @@ function getTimingsTable(results: DayResult[]) {
 }
 
 function printTimingsTable(results) {
-  console.clear();
+  if (!values.day) {
+    console.clear();
+  }
   console.log(getTimingsTable(results));
 }
 
