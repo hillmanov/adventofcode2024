@@ -65,7 +65,7 @@ function looksLikeAChristmasTree(grid: boolean[][]): boolean {
     let runLength = 0;
     for (let col = 0; col < gridWidth - runMin; col++) {
       if (grid[row][col]) {
-        if (runLength++ >= 10) {
+        if (runLength++ >= runMin) {
           return true      
         }
       } else {
