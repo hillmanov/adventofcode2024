@@ -9,31 +9,31 @@ type Delta = {
 type Robot = {
   start: Point;
   vector: Delta;
-  end: Point;
+  current: Point;
 }
+
+const gridWidth = 101;
+const gridHeight = 103;
+const xLine = ((gridHeight - 1) / 2);
+const yLine = ((gridWidth - 1) / 2);
 
 async function part1(): Promise<number> {
   const robots = await getInput();
-  const gridWidth = 101;
-  const gridHeight = 103;
-
-  let xLine = ((gridHeight - 1) / 2);
-  let yLine = ((gridWidth - 1) / 2);
 
   let safetyFactors = [0, 0, 0, 0];
   for (const robot of robots) {
-    robot.end.col = wrap(robot.end.col + (robot.vector.col * 100), gridWidth);
-    robot.end.row = wrap(robot.end.row + (robot.vector.row * 100), gridHeight);
-    if (robot.end.col < yLine && robot.end.row < xLine) {
+    robot.current.col = wrap(robot.current.col + (robot.vector.col * 100), gridWidth);
+    robot.current.row = wrap(robot.current.row + (robot.vector.row * 100), gridHeight);
+    if (robot.current.col < yLine && robot.current.row < xLine) {
       safetyFactors[0]++;
     }
-    if (robot.end.col > yLine && robot.end.row < xLine) {
+    if (robot.current.col > yLine && robot.current.row < xLine) {
       safetyFactors[1]++;
     }
-    if (robot.end.col < yLine && robot.end.row > xLine) {
+    if (robot.current.col < yLine && robot.current.row > xLine) {
       safetyFactors[2]++;
     }
-    if (robot.end.col > yLine && robot.end.row > xLine) {
+    if (robot.current.col > yLine && robot.current.row > xLine) {
       safetyFactors[3]++;
     }
   }
@@ -42,7 +42,38 @@ async function part1(): Promise<number> {
 }
 
 async function part2(): Promise<number> {
-  return 0;
+  const robots = await getInput();
+  const grid: boolean[][] = Array(gridHeight).fill(false).map(() => Array(gridWidth).fill(false));
+
+  let seconds = 0;
+  while(!looksLikeAChristmasTree(grid)) {
+    seconds++;
+    for (const robot of robots) {
+      grid[robot.current.row][robot.current.col] = false;
+      robot.current.col = wrap(robot.start.col + (robot.vector.col * seconds), gridWidth);
+      robot.current.row = wrap(robot.start.row + (robot.vector.row * seconds), gridHeight);
+      grid[robot.current.row][robot.current.col] = true;
+    }
+  } 
+
+  return seconds;
+}
+
+function looksLikeAChristmasTree(grid: boolean[][]): boolean {
+  const runMin = 15;
+  for (let row = 0; row < gridHeight; row++) {
+    let runLength = 0;
+    for (let col = 0; col < gridWidth - runMin; col++) {
+      if (grid[row][col]) {
+        if (runLength++ >= 10) {
+          return true      
+        }
+      } else {
+        runLength = 0;
+      }
+    }
+  }
+  return false;
 }
 
 function wrap(n: number, max: number): number {
@@ -58,14 +89,14 @@ async function getInput(): Promise<Robot[]> {
     robots.push({
       start: { col: parseInt(robotChunk[1]), row: parseInt(robotChunk[2]) },
       vector: { col: parseInt(robotChunk[3]),  row: parseInt(robotChunk[4]) },
-      end: { col: parseInt(robotChunk[1]), row: parseInt(robotChunk[2]) },
+      current: { col: parseInt(robotChunk[1]), row: parseInt(robotChunk[2]) },
     });
   }
   return robots;
 }
 
 const part1Answer = 230435667;
-const part2Answer = null;
+const part2Answer = 7709;
 
 export {
   part1,
