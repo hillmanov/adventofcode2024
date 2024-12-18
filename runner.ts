@@ -153,12 +153,17 @@ function getTimingsTable(results: DayResult[]) {
           "", 
           "Part 2",
           `${part2Correct !== null ? part2Correct ? "✅" : "❌" : "❓"} ${part2}${part2Correct === false ? " (expected: " + part2Answer + ")" : ""}`, 
-          `${!isNaN(part2Time) ? part2Time.toFixed(3) : "N/A"}`, ""
+          `${!isNaN(part2Time) ? part2Time.toFixed(3) : "N/A"}`,
+          ""
         ],
         type: ''
       }
     ];
   }));
+  data.push({
+    row: ["Total", "", "", "", results.reduce((acc, { part1Time, part2Time }) => acc + part1Time + part2Time, 0).toFixed(3)],
+    type: 'total'  
+  });
 
   const config = {
     columns: [
@@ -183,9 +188,18 @@ function getTimingsTable(results: DayResult[]) {
         }
         ]);
       }
+      if (row.type === 'total') {
+        acc.push({
+          col: 0,
+          row: index,
+          colSpan: 4,
+          alignment: 'right'
+        });
+      }
       return acc;
     }, [] as any[])
   };
+  console.log(`config`, config);
   const tableOutput = table(data.map(d => d.row), config);
   return tableOutput;
 }
