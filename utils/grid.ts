@@ -26,6 +26,18 @@ export const Delta = {
   [DIRECTION.UL]: [-1, -1],
 }
 
+export const DirectionChar = {
+  [DIRECTION.U]: "^",
+  [DIRECTION.R]: ">",
+  [DIRECTION.D]: "v",
+  [DIRECTION.L]: "<",
+
+  [DIRECTION.UR]: "/",
+  [DIRECTION.DR]: "\\",
+  [DIRECTION.DL]: "/",
+  [DIRECTION.UL]: "\\",
+}
+
 export const ORTHOGONAL_DIRECTIONS = [DIRECTION.U, DIRECTION.R, DIRECTION.D, DIRECTION.L];
 export const OMNI_DIRECTIONS = [DIRECTION.U, DIRECTION.R, DIRECTION.D, DIRECTION.L, DIRECTION.UR, DIRECTION.DR, DIRECTION.DL, DIRECTION.UL];
 export const DIAGONAL_DIRECTIONS = [DIRECTION.UR, DIRECTION.DR, DIRECTION.DL, DIRECTION.UL];
@@ -68,12 +80,16 @@ export function walkGrid<T>(grid: T[][], callback: (value: T, point: Point) => v
   }
 }
 
-export function inGridBounds(p: Point, grid: any[][]): boolean {
+export function inGridBounds(grid: any[][], p: Point): boolean {
   return p.row >= 0 && p.row < grid.length && p.col >= 0 && p.col < grid[0].length;
 }
 
 export function encode(p: Point): number {
   return p.row << 12 | p.col;
+}
+
+export function encodeWithDirection(p: Point, d: DIRECTION): number {
+  return p.row << 14 | p.col << 2 | d;
 }
 
 export function decode(n: number): Point {

@@ -40,10 +40,10 @@ async function part1(): Promise<number> {
         moveAmount(antinode1, DIRECTION.UL, dRow, dCol);
         moveAmount(antinode2, DIRECTION.DR, dRow, dCol);
 
-        if (inGridBounds(antinode1, map)) {
+        if (inGridBounds(map, antinode1)) {
           uniqueAntinodeLocations.add(encode(antinode1));
         }
-        if (inGridBounds(antinode2, map)) {
+        if (inGridBounds(map, antinode2)) {
           uniqueAntinodeLocations.add(encode(antinode2));
         }
       }
@@ -90,11 +90,11 @@ async function part2(): Promise<number> {
         uniqueAntinodeLocations.add(encode(location1));
         uniqueAntinodeLocations.add(encode(location2));
         
-        while(inGridBounds(antinode1, map)) {
+        while(inGridBounds(map, antinode1)) {
           uniqueAntinodeLocations.add(encode(antinode1));
           moveAmount(antinode1, DIRECTION.UL, dRow, dCol);
         }
-        while(inGridBounds(antinode2, map)) {
+        while(inGridBounds(map, antinode2)) {
           uniqueAntinodeLocations.add(encode(antinode2));
           moveAmount(antinode2, DIRECTION.DR, dRow, dCol);
         }

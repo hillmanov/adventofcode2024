@@ -79,7 +79,7 @@ async function part2(): Promise<number> {
 
     while (true) {
       move(nextLocation, currentDirection);
-      if (!inGridBounds(nextLocation, grid)) {
+      if (!inGridBounds(grid, nextLocation)) {
         return false;
       }
 

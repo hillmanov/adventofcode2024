@@ -25,7 +25,7 @@ async function part1(): Promise<number> {
     const dest = go(from, direction);
     const destThing = valueAt(map, dest);
 
-    if (!inGridBounds(dest, map) || destThing === "#") {
+    if (!inGridBounds(map, dest) || destThing === "#") {
       return false;
     }
 
@@ -94,7 +94,7 @@ async function part2(): Promise<number> {
     const leftEdgeDestThing = valueAt(map, leftEdgeDest);
     const rightEdgeDestThing = valueAt(map, rightEdgeDest);
 
-    if (!inGridBounds(leftEdgeDest, map) || leftEdgeDestThing === "#" || !inGridBounds(rightEdgeDest, map) || rightEdgeDestThing === "#") {
+    if (!inGridBounds(map, leftEdgeDest) || leftEdgeDestThing === "#" || !inGridBounds(map, rightEdgeDest) || rightEdgeDestThing === "#") {
       return false;
     }
 
@@ -147,7 +147,7 @@ async function part2(): Promise<number> {
     const dest = go(from, direction);
     const destThing = valueAt(map, dest);
 
-    if (!inGridBounds(dest, map) || destThing === "#") {
+    if (!inGridBounds(map, dest) || destThing === "#") {
       return false;
     }
 

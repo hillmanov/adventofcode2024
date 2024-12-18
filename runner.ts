@@ -199,7 +199,6 @@ function getTimingsTable(results: DayResult[]) {
       return acc;
     }, [] as any[])
   };
-  console.log(`config`, config);
   const tableOutput = table(data.map(d => d.row), config);
   return tableOutput;
 }

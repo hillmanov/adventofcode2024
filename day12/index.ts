@@ -112,7 +112,7 @@ function getPlots(garden: garden, countCorners: boolean = false): Map<plant, plo
 
     for (const d of ORTHOGONAL_DIRECTIONS) {
       const neighbor = go(point, d);
-      if (inGridBounds(neighbor, garden)) {
+      if (inGridBounds(garden, neighbor)) {
         discoverPlot(plotPlant, neighbor, plot);
       }
     }
