@@ -58,10 +58,12 @@ export function valueAt<T>(grid: T[][], p: Point): (T | null) {
   return grid[p.row]?.[p.col] ?? null;
 }
 
-export function walkGrid<T>(grid: T[][], callback: (value: T, point: Point) => void) {
+export function walkGrid<T>(grid: T[][], callback: (value: T, point: Point) => void | boolean) {
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[0].length; col++) {
-      callback(grid[row][col], { row, col })
+      if (callback(grid[row][col], { row, col }) === false) {
+        return;
+      }
     }
   }
 }
@@ -89,4 +91,10 @@ export function copyPoint(p: Point): Point {
 export function setPointTo(a: Point, b: Point): void {
   a.row = b.row;
   a.col = b.col;
+}
+
+export function logGrid(grid: any[][]) {
+  for (let row = 0; row < grid.length; row++) {
+    console.log(grid[row].join(""));
+  }
 }
