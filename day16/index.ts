@@ -1,13 +1,13 @@
 import { readLines } from "../utils/io";
 import {
-  inGridBounds,
-  go,
-  walkGrid,
-  pointsAreEqual,
-  valueAt,
   type Point,
-  encode,
+  go,
+  inGridBounds,
+  pointsAreEqual,
+  walkGrid,
+  valueAt,
   encodeWithDirection,
+  encode,
   DIRECTION,
   ORTHOGONAL_DIRECTIONS,
 } from "../utils/grid";
@@ -15,109 +15,94 @@ import PriorityQueue  from "../utils/priorityQueue";
 
 type maze = string[][];
 
-interface Node {
-  point: Point;
-  costFromStart: number;
-  heuristic: number;
-  totalCost: number;
-  parent: Node | null;
-  direction: DIRECTION;
-}
-
-const heuristic = (a: Point, b: Point): number => {
-  return Math.abs(a.col - b.col) + Math.abs(a.row - b.row);
-}
-
 async function part1(): Promise<number> {
   const maze = await getInput();
   const {start, end} = getStartAndEnd(maze);
 
-  const findCheapestPath = (): number | null => {
-    const open = new PriorityQueue<Node>((a, b) => a.totalCost - b.totalCost);
-    const startNode: Node = {
-      point: start,
-      costFromStart: 0,                 // g(n)
-      heuristic: heuristic(start, end), // h(n)
-      totalCost: heuristic(start, end), // f(n)
-      parent: null,
-      direction: DIRECTION.R,
-    }
-
-    open.push(startNode);
-
-    const visited: Map<number, number> = new Map(); // encoded point to costFromStart
-
-    while (!open.isEmpty()) {
-      const current = open.pop()!;
-
-      if (pointsAreEqual(current.point, end)) {
-        return current.costFromStart;
-      }
-
-      const key = encodeWithDirection(current.point, current.direction);
-      if (visited.get(key) ?? Infinity <= current.costFromStart) {
-        continue;
-      }
-
-      visited.set(encodeWithDirection(current.point, current.direction), current.costFromStart);
-
-      const neighbors: { point: Point, direction: DIRECTION }[] = ORTHOGONAL_DIRECTIONS
-      .map((direction) => ({ point: go(current.point, direction), direction }))
-      .filter(({point}) => {
-        return inGridBounds(maze, point) && valueAt(maze, point) !== "#";
-      });
-
-      for (const neighbor of neighbors) {
-        let cost = current.costFromStart + 1;
-        if (current.direction !== neighbor.direction) {
-          cost += 1000;
-        }
-
-        const key = encodeWithDirection(neighbor.point, neighbor.direction);
-        if (visited.get(key) ?? Infinity <= cost) {
-          continue;
-        }
-
-        open.push({
-          point: neighbor.point,
-          costFromStart: cost,
-          heuristic: heuristic(neighbor.point, end),
-          totalCost: cost + heuristic(neighbor.point, end),
-          parent: current,
-          direction: neighbor.direction,
-        })
-      }
-    }
-    return null;
-  }
-
-  const path = findCheapestPath();
-  if (!path) {
-    return 0;
-  }
-
-  return path;
+  return djikstra(start, end, maze) ?? -1;
 }
 
 async function part2(): Promise<number> {
   const maze = await getInput();
   const {start, end} = getStartAndEnd(maze);
+  let lowestScore = djikstra(start, end, maze) ?? -1;
 
-  return 0;
+  return lowestScore;
 }
 
-function dumpPath(path: path, maze: maze): void {
-  for (let row = 0; row < maze.length; row++) {
-    let rowString = "";
-    for (let col = 0; col < maze[row].length; col++) {
-      let found = false;
-      if (!found) {
-        rowString += maze[row][col];
+interface QueueElement {
+  point: Point;
+  cost: number;
+  parents: QueueElement[] | null;
+  direction: DIRECTION
+}
+
+function djikstra(start: Point, end: Point, maze: maze): number | null {
+  const pq = new PriorityQueue<QueueElement>((a, b) => a.cost - b.cost);
+  const distance = new Map<number, number>();
+
+  for (const dir of ORTHOGONAL_DIRECTIONS) {
+    distance.set(encodeWithDirection(start, dir), Infinity);
+  }
+  distance.set(encodeWithDirection(start, DIRECTION.R), 0);
+  pq.push({point: start, cost: 0, direction: DIRECTION.R, parents: null});
+
+  const queueElementMap = new Map<number, QueueElement>();
+
+  const uniquePoints = new Set<number>();
+  // Start the search
+  while (!pq.isEmpty()) {
+    const current = pq.pop()!;
+    const { point, cost, direction } = current;
+
+    if (pointsAreEqual(point, end)) {
+      const stack: QueueElement[] = [current];
+
+      while (stack.length > 0) {
+        const current = stack.pop()!;
+        const encoded = encode(current.point);
+
+        if (!uniquePoints.has(encoded)) {
+          uniquePoints.add(encoded);
+
+          for (const parent of current.parents ?? []) {
+            stack.push(parent);
+          }
+        }
+      }
+      console.log(`uniquePoints.size`, uniquePoints.size);
+    }
+
+    for (const dir of ORTHOGONAL_DIRECTIONS) {
+      const neighbor = go(point, dir);
+
+      if (inGridBounds(maze, neighbor) && valueAt(maze, neighbor) !== "#") {
+        let newCost = cost + 1;
+        if (direction !== dir) {
+          newCost += 1000;
+        }
+          
+        const distanceValue = distance.get(encodeWithDirection(neighbor, dir)) ?? Infinity;
+
+        if (newCost < distanceValue) {
+          distance.set(encodeWithDirection(neighbor, dir), newCost);
+          const element = { point: neighbor, cost: newCost, direction: dir, parents: [current] };
+          queueElementMap.set(encodeWithDirection(neighbor, dir), element);
+          pq.push(element);
+        } else if (newCost === distanceValue) {
+          const existing = queueElementMap.get(encodeWithDirection(neighbor, dir));
+          if (existing) {
+            existing.parents?.push(current);
+          } else {
+            const element = { point: neighbor, cost: newCost, direction: dir, parents: [current] };
+            queueElementMap.set(encodeWithDirection(neighbor, dir), element);
+            pq.push(element);
+          }
+        }
       }
     }
-    console.log(rowString);
   }
-
+  return null;
 }
 
 function getStartAndEnd(maze: maze): {start: Point, end: Point} {
