@@ -142,8 +142,8 @@ function getTimingsTable(results: DayResult[]) {
           `Day ${day}`,
           "Part 1",
           `${part1Correct !== null ? part1Correct ? "✅" : "❌" : "❓"} ${part1}${part1Correct === false ? " (expected: " + part1Answer + ")" : ""}`, 
-          `${!isNaN(part1Time) ? part1Time.toFixed(3) : "N/A"}`, 
-          (!isNaN(part1Time) && !isNaN(part2Time)) ? (part1Time + part2Time).toFixed(3) : "N/A",
+          `${!isNaN(part1Time) ? `${part1Time.toFixed(3)} ms` : "N/A"}`, 
+          (!isNaN(part1Time) && !isNaN(part2Time)) ? `${(part1Time + part2Time).toFixed(3)} ms` : "N/A",
         ],
         type: 'day',
       },
@@ -153,7 +153,7 @@ function getTimingsTable(results: DayResult[]) {
           "", 
           "Part 2",
           `${part2Correct !== null ? part2Correct ? "✅" : "❌" : "❓"} ${part2}${part2Correct === false ? " (expected: " + part2Answer + ")" : ""}`, 
-          `${!isNaN(part2Time) ? part2Time.toFixed(3) : "N/A"}`,
+          `${!isNaN(part2Time) ? `${part2Time.toFixed(3)} ms` : "N/A"}`,
           ""
         ],
         type: ''
@@ -161,7 +161,7 @@ function getTimingsTable(results: DayResult[]) {
     ];
   }));
   data.push({
-    row: ["Total", "", "", "", results.reduce((acc, { part1Time, part2Time }) => acc + part1Time + part2Time, 0).toFixed(3)],
+    row: ["Total", "", "", "", `${results.reduce((acc, { part1Time, part2Time }) => acc + part1Time + part2Time, 0).toFixed(3)} ms`],
     type: 'total'  
   });
 
