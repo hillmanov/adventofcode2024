@@ -7,7 +7,6 @@ import {
   walkGrid,
   valueAt,
   encodeWithDirection,
-  encode,
   DIRECTION,
   ORTHOGONAL_DIRECTIONS,
 } from "../utils/grid";
@@ -33,7 +32,6 @@ async function part2(): Promise<number> {
 interface QueueElement {
   point: Point;
   cost: number;
-  parents: QueueElement[] | null;
   direction: DIRECTION
 }
 
@@ -45,32 +43,14 @@ function djikstra(start: Point, end: Point, maze: maze): number | null {
     distance.set(encodeWithDirection(start, dir), Infinity);
   }
   distance.set(encodeWithDirection(start, DIRECTION.R), 0);
-  pq.push({point: start, cost: 0, direction: DIRECTION.R, parents: null});
 
-  const queueElementMap = new Map<number, QueueElement>();
-
-  const uniquePoints = new Set<number>();
-  // Start the search
+  pq.push({point: start, cost: 0, direction: DIRECTION.R});
   while (!pq.isEmpty()) {
     const current = pq.pop()!;
     const { point, cost, direction } = current;
 
     if (pointsAreEqual(point, end)) {
-      const stack: QueueElement[] = [current];
-
-      while (stack.length > 0) {
-        const current = stack.pop()!;
-        const encoded = encode(current.point);
-
-        if (!uniquePoints.has(encoded)) {
-          uniquePoints.add(encoded);
-
-          for (const parent of current.parents ?? []) {
-            stack.push(parent);
-          }
-        }
-      }
-      console.log(`uniquePoints.size`, uniquePoints.size);
+      return cost;
     }
 
     for (const dir of ORTHOGONAL_DIRECTIONS) {
@@ -82,23 +62,12 @@ function djikstra(start: Point, end: Point, maze: maze): number | null {
           newCost += 1000;
         }
           
-        const distanceValue = distance.get(encodeWithDirection(neighbor, dir)) ?? Infinity;
-
-        if (newCost < distanceValue) {
+        const distanceValue = distance.get(encodeWithDirection(neighbor, dir));
+        if (distanceValue === undefined || newCost < distanceValue) {
           distance.set(encodeWithDirection(neighbor, dir), newCost);
-          const element = { point: neighbor, cost: newCost, direction: dir, parents: [current] };
-          queueElementMap.set(encodeWithDirection(neighbor, dir), element);
-          pq.push(element);
-        } else if (newCost === distanceValue) {
-          const existing = queueElementMap.get(encodeWithDirection(neighbor, dir));
-          if (existing) {
-            existing.parents?.push(current);
-          } else {
-            const element = { point: neighbor, cost: newCost, direction: dir, parents: [current] };
-            queueElementMap.set(encodeWithDirection(neighbor, dir), element);
-            pq.push(element);
-          }
+          pq.push({ point: neighbor, cost: newCost, direction: dir });
         }
+
       }
     }
   }
