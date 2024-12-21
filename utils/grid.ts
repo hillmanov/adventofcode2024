@@ -114,3 +114,7 @@ export function logGrid(grid: any[][]) {
     console.log(grid[row].join(""));
   }
 }
+
+export function manhattanDistance(p1: Point, p2: Point): number {
+  return Math.abs(p1.row - p2.row) + Math.abs(p1.col - p2.col);
+}

@@ -6,6 +6,7 @@ import {
   encode,
   go,
   ORTHOGONAL_DIRECTIONS,
+  manhattanDistance,
 } from "../utils/grid";
 
 type Track = string[][];
@@ -60,19 +61,19 @@ async function part2(): Promise<number> {
 
   let goodCheats = 0;
   for (const step of path) {
-    for (let r = Math.max(0, step.point.row - 20); r <= Math.min(step.point.row + 20, track.length - 1); r++) {
-      const maxColOffset = 20 - Math.abs(r - step.point.row); // Calculate column offset based on remaining steps
-      const colStart = Math.max(0, step.point.col - maxColOffset);
-      const colEnd = Math.min(track[0].length - 1, step.point.col + maxColOffset);
+    const stepPointRow = step.point.row;
+    const stepPointCol = step.point.col;
+
+    for (let r = stepPointRow - 20; r <= stepPointRow + 20; r++) {
+      const maxColOffset = 20 - Math.abs(r - stepPointRow); 
+      const colStart = stepPointCol - maxColOffset;
+      const colEnd = stepPointCol + maxColOffset;
 
       for (let c = colStart; c <= colEnd; c++) {
-        const cheatToStep = pointToStepMap.get(encode({ row: r, col: c }));
+        const cheatToStep = pointToStepMap.get(r << 12 | c);
 
-        if (cheatToStep) {
-          const dy = Math.abs(cheatToStep.point.row - step.point.row);
-          const dx = Math.abs(cheatToStep.point.col - step.point.col);
-          const cheatPs = dy + dx;
-
+        if (cheatToStep && cheatToStep.ps - step.ps >= 100) {
+          const cheatPs = manhattanDistance(step.point, cheatToStep.point);
           if ((cheatToStep.ps - step.ps - cheatPs) >= 100) {
             goodCheats++;
           }
@@ -128,8 +129,8 @@ async function getInput(): Promise<Track> {
   return (await readContents(__dirname + "/input.txt")).split("\n").map(line => line.split(""));
 }
 
-const part1Answer = null;
-const part2Answer = null;
+const part1Answer = 1507;
+const part2Answer = 1037936;
 
 export {
   part1,
