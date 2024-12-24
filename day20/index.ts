@@ -63,6 +63,7 @@ async function part2(): Promise<number> {
   for (const step of path) {
     const stepPointRow = step.point.row;
     const stepPointCol = step.point.col;
+    const stepPs = step.ps;
 
     for (let r = stepPointRow - 20; r <= stepPointRow + 20; r++) {
       const maxColOffset = 20 - Math.abs(r - stepPointRow); 
@@ -72,9 +73,9 @@ async function part2(): Promise<number> {
       for (let c = colStart; c <= colEnd; c++) {
         const cheatToStep = pointToStepMap.get(r << 12 | c);
 
-        if (cheatToStep && cheatToStep.ps - step.ps >= 100) {
+        if (cheatToStep && cheatToStep.ps - stepPs >= 100) {
           const cheatPs = manhattanDistance(step.point, cheatToStep.point);
-          if ((cheatToStep.ps - step.ps - cheatPs) >= 100) {
+          if ((cheatToStep.ps -stepPs - cheatPs) >= 100) {
             goodCheats++;
           }
         }
