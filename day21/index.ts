@@ -125,12 +125,12 @@ function trickleDown (sequence: string[], pads: Pad[], padIndex: number = 0): st
   const noA = nextSequence.filter(s => s !== 'A').length;
   const yesA = nextSequence.filter(s => s === 'A').length;
   if (padIndex === pads.length - 1) {
-    console.log(`Just A: ${yesA}, Without A: ${noA}, Total: ${nextSequence.length}, Difference: ${noA - yesA}, Ratio: ${noA / yesA}`);
-    console.log(`-------------`);
+    // console.log(`Just A: ${yesA}, Without A: ${noA}, Total: ${nextSequence.length}, Difference: ${noA - yesA}, Ratio: ${noA / yesA}`);
+    // console.log(`-------------`);
     return nextSequence;
   } else {
-    console.log(`Just A: ${yesA}, Without A: ${noA}, Total: ${nextSequence.length}, Difference: ${noA - yesA}, Ratio: ${noA / yesA}`);
-    console.log(`-------------`);
+    // console.log(`Just A: ${yesA}, Without A: ${noA}, Total: ${nextSequence.length}, Difference: ${noA - yesA}, Ratio: ${noA / yesA}`);
+    // console.log(`-------------`);
     return trickleDown(nextSequence, pads, padIndex + 1);
   }
 }
