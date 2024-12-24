@@ -171,7 +171,7 @@ function getTimingsTable(results: DayResult[]) {
       { alignment: 'left', width: 10 },
       { alignment: 'right', width: 20},
       { alignment: 'right', width: 20 },
-      { alignment: 'center', width: 10 },
+      { alignment: 'center', width: 20 },
     ],
     spanningCells: data.reduce((acc, row, index) => {
       if (row.type === 'day') {
