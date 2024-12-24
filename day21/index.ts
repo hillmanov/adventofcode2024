@@ -109,7 +109,7 @@ async function part2(): Promise<number> {
     sum += sequenceNumber * moves.length;
     pads.forEach(pad => pad.currentSymbol = 'A');
   }
-  return sum;
+  return -1;
 }
 
 function trickleDown (sequence: string[], pads: Pad[], padIndex: number = 0): string[] {
