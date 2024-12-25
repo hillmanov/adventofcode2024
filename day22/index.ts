@@ -1,8 +1,15 @@
 import { readContents } from "../utils/io";
+import { readFile } from "fs/promises";
+import p from "./native.wasm";
+import { type WASMExports } from "./native.d"; 
 
-async function part1(): Promise<bigint> {
+const wasmBuffer = await readFile(p);
+const wasmModule = await WebAssembly.instantiate(wasmBuffer);
+const { predictNextSecretNumber, encodeSequence } = wasmModule.instance.exports as unknown as WASMExports;
+
+async function part1(): Promise<number> {
   const secretNumbers = await getInput();
-  let sum = 0n;
+  let sum = 0;
   for(const secretNumber of secretNumbers) {
     sum += getNthSecretNumber(secretNumber, 2000);
   }
@@ -12,71 +19,51 @@ async function part1(): Promise<bigint> {
 async function part2(): Promise<number> {
   const secretNumbers = await getInput();
 
-  const sequenceToPrice = new Map<number, (number | null)[]>();
-  for(let [index, secretNumber] of secretNumbers.entries()) {
+  const sequenceToPrice = new Map<number, number>();
+  for(let secretNumber of secretNumbers.values()) {
+    const sequencesSeen = new Set<number>();
     const priceChanges: number[] = new Array(2000);
     let previousPrice = 0;
+
     for (let i = 0; i <= 2000; i++) {
       secretNumber = predictNextSecretNumber(secretNumber);
-      const price = Number(secretNumber % 10n);
+      const price = secretNumber % 10;
+
       priceChanges[i] = price - previousPrice;
       previousPrice = price;
+
       if (i >= 3) {
-        const e = encodeSequence(priceChanges.slice(i - 3, i + 1));
-        if (!sequenceToPrice.has(e)) {
-          sequenceToPrice.set(e, new Array(secretNumbers.length).fill(null));
+        const e = encodeSequence(priceChanges[i - 3], priceChanges[i - 2], priceChanges[i - 1], priceChanges[i]);
+        if (sequencesSeen.has(e)) {
+          continue;
         }
-        const prices = sequenceToPrice.get(e)!;
-        if (prices[index] === null) {
-          prices[index] = price;
-        }
-        sequenceToPrice.set(e, prices)
+        sequenceToPrice.set(e, (sequenceToPrice.get(e) ?? 0) + price);
+        sequencesSeen.add(e);
       }
     }
   }
 
   let maxPrice = -Infinity;
   for (const [,prices] of sequenceToPrice.entries()) {
-    if (sum(prices) > maxPrice) {
-      maxPrice = sum(prices);
-    }
+    maxPrice = Math.max(maxPrice, prices);
   }
 
   return maxPrice;
 }
 
-
-function getNthSecretNumber(secretNumber: bigint, n: number): bigint {
+function getNthSecretNumber(secretNumber: number, n: number): number {
   for (let i = 0; i < n; i++) {
-    secretNumber = predictNextSecretNumber(secretNumber);
+    secretNumber = predictNextSecretNumber(Number(secretNumber));
   }
   return secretNumber;
 }
 
-function sum(array: (number | null)[]): number {
-  return array.filter(s => s !== null).reduce((a, b) => a + b, 0);
-}
-
-// Tried to go bitwise to speed it up. Helped a tiny amount.
-function predictNextSecretNumber(secretNumber: bigint): bigint {
-  const MASK = 16777215n; 
-  secretNumber = ((secretNumber << 6n) ^ secretNumber) & MASK; 
-  secretNumber = ((secretNumber >> 5n) ^ secretNumber) & MASK; 
-  secretNumber = ((secretNumber << 11n) ^ secretNumber) & MASK; 
-  return secretNumber;
-}
-
-function encodeSequence(sequence: number[]): number {
-  const PRIME = 31; 
-  return sequence.reduce((hash, num) => hash * PRIME + (num + 1000), 0);
-}
-
-async function getInput(): Promise<bigint[]> {
-  const input = (await readContents(__dirname + "/input.txt")).split("\n").map((line) => BigInt(line));
+async function getInput(): Promise<number[]> {
+  const input = (await readContents(__dirname + "/input.txt")).split("\n").map((line) => Number(line));
   return input;
 }
 
-const part1Answer = 13234715490n;
+const part1Answer = 13234715490;
 const part2Answer = 1490;
 
 export {

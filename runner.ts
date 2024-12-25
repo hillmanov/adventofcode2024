@@ -3,6 +3,7 @@ import { performance } from "perf_hooks";
 import { readdir } from "node:fs/promises";
 import { parseArgs } from "util";
 import { table } from 'table';
+import { $ } from "bun";
 
 const { values } = parseArgs({
   args: Bun.argv,
@@ -59,7 +60,18 @@ for (const dayFolder of dayFolders) {
     if (requestedDay && requestedDay !== dayNumber) continue;
 
     const dayPath = path.join(directory, dayFolder.name);
+    const buildFilePath = path.join(dayPath, 'build.js');
 
+    try {
+      await $`
+        if test -f "${buildFilePath}"; then
+          echo "Building native module: ${buildFilePath}";
+          bun ${buildFilePath}
+        fi;`.cwd(dayPath);
+    } catch (err) {
+      console.error(`Error building native module for: ${dayFolder.name}:`, err);
+      process.exit(1);
+    }
     try {
       const module = await import(dayPath);
       const { part1, part2, part1Answer, part2Answer } = module;
@@ -203,7 +215,7 @@ function getTimingsTable(results: DayResult[]) {
   return tableOutput;
 }
 
-function printTimingsTable(results) {
+function printTimingsTable(results: DayResult[]) {
   if (!values.day) {
     console.clear();
   }
