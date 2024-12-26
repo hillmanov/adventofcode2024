@@ -179,11 +179,11 @@ function getTimingsTable(results: DayResult[]) {
 
   const config = {
     columns: [
-      { alignment: 'center', width: 10 },
-      { alignment: 'left', width: 10 },
+      { alignment: 'center', width: 6},
+      { alignment: 'left', },
       { alignment: 'right'},
       { alignment: 'right'},
-      { alignment: 'center', width: 15 },
+      { alignment: 'center'},
     ],
     spanningCells: data.reduce((acc, row, index) => {
       if (row.type === 'day') {
