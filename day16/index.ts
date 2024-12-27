@@ -6,9 +6,12 @@ import {
   pointsAreEqual,
   walkGrid,
   valueAt,
+  encode,
   encodeWithDirection,
+  DirectionChar,
   DIRECTION,
   ORTHOGONAL_DIRECTIONS,
+  OPPOSITE_DIRECTION,
 } from "../utils/grid";
 import PriorityQueue  from "../utils/priorityQueue";
 
@@ -17,16 +20,41 @@ type maze = string[][];
 async function part1(): Promise<number> {
   const maze = await getInput();
   const {start, end} = getStartAndEnd(maze);
+  let { lowestCost }  = djikstra(start, end, maze);
 
-  return djikstra(start, end, maze) ?? -1;
+  return lowestCost
 }
 
 async function part2(): Promise<number> {
   const maze = await getInput();
   const {start, end} = getStartAndEnd(maze);
-  let lowestScore = djikstra(start, end, maze) ?? -1;
+  let { lowestCost, pointCosts } = djikstra(start, end, maze, true);
 
-  return lowestScore;
+  const visited = new Set<number>();
+  const track = (currentPoint: Point, currentDirection: DIRECTION, currentCost: number) => {
+    console.log(`currentPoint`, currentPoint, DirectionChar[currentDirection]);
+    if (pointsAreEqual(currentPoint, start)) {
+      return
+    }
+    for (const nextDirection of ORTHOGONAL_DIRECTIONS) {
+      const nextPoint = go(currentPoint, nextDirection); 
+      let nextCost = currentCost - 1;
+      if (currentDirection !== nextDirection) {
+        nextCost -= 1000;
+      }
+
+      if ((pointCosts.get(encodeWithDirection(nextPoint, nextDirection))) === nextCost) {
+        visited.add(encode(nextPoint));
+        track(nextPoint, nextDirection, nextCost);
+      }
+    }
+  }
+
+  for (const startDirection of ORTHOGONAL_DIRECTIONS) {
+    track(end, startDirection, lowestCost);
+  }
+
+  return visited.size;
 }
 
 interface QueueElement {
@@ -35,22 +63,29 @@ interface QueueElement {
   direction: DIRECTION
 }
 
-function djikstra(start: Point, end: Point, maze: maze): number | null {
+function djikstra(start: Point, end: Point, maze: maze, findAllPaths: boolean = false): { lowestCost: number, pointCosts: Map<number, number> } {
   const pq = new PriorityQueue<QueueElement>((a, b) => a.cost - b.cost);
-  const distance = new Map<number, number>();
+  const costs = new Map<number, number>();
 
   for (const dir of ORTHOGONAL_DIRECTIONS) {
-    distance.set(encodeWithDirection(start, dir), Infinity);
+    costs.set(encodeWithDirection(start, dir), Infinity);
   }
-  distance.set(encodeWithDirection(start, DIRECTION.R), 0);
+  costs.set(encodeWithDirection(start, DIRECTION.R), 0);
 
   pq.push({point: start, cost: 0, direction: DIRECTION.R});
+  let lowestCost = -1;
   while (!pq.isEmpty()) {
     const current = pq.pop()!;
     const { point, cost, direction } = current;
 
     if (pointsAreEqual(point, end)) {
-      return cost;
+      if (findAllPaths) {
+        lowestCost = cost;
+        continue;
+      } else {
+        lowestCost = cost;
+        return { lowestCost: cost, pointCosts: costs };
+      }
     }
 
     for (const dir of ORTHOGONAL_DIRECTIONS) {
@@ -62,16 +97,22 @@ function djikstra(start: Point, end: Point, maze: maze): number | null {
           newCost += 1000;
         }
           
-        const distanceValue = distance.get(encodeWithDirection(neighbor, dir));
-        if (distanceValue === undefined || newCost < distanceValue) {
-          distance.set(encodeWithDirection(neighbor, dir), newCost);
-          pq.push({ point: neighbor, cost: newCost, direction: dir });
+        const distanceValue = costs.get(encodeWithDirection(neighbor, dir));
+        if (findAllPaths) {
+          if (newCost <= (distanceValue ?? Infinity)) {
+            costs.set(encodeWithDirection(neighbor, dir), newCost);
+            pq.push({ point: neighbor, cost: newCost, direction: dir });
+          }
+        } else {
+          if (newCost < (distanceValue ?? Infinity)) {
+            costs.set(encodeWithDirection(neighbor, dir), newCost);
+            pq.push({ point: neighbor, cost: newCost, direction: dir });
+          }
         }
-
       }
     }
   }
-  return null;
+  return { lowestCost, pointCosts: costs };
 }
 
 function getStartAndEnd(maze: maze): {start: Point, end: Point} {

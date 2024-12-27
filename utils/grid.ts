@@ -42,6 +42,18 @@ export const ORTHOGONAL_DIRECTIONS = [DIRECTION.U, DIRECTION.R, DIRECTION.D, DIR
 export const OMNI_DIRECTIONS = [DIRECTION.U, DIRECTION.R, DIRECTION.D, DIRECTION.L, DIRECTION.UR, DIRECTION.DR, DIRECTION.DL, DIRECTION.UL];
 export const DIAGONAL_DIRECTIONS = [DIRECTION.UR, DIRECTION.DR, DIRECTION.DL, DIRECTION.UL];
 
+export const OPPOSITE_DIRECTION = {
+  [DIRECTION.U]: DIRECTION.D,
+  [DIRECTION.R]: DIRECTION.L,
+  [DIRECTION.D]: DIRECTION.U,
+  [DIRECTION.L]: DIRECTION.R,
+
+  [DIRECTION.UR]: DIRECTION.DL,
+  [DIRECTION.DR]: DIRECTION.UL,
+  [DIRECTION.DL]: DIRECTION.UR,
+  [DIRECTION.UL]: DIRECTION.DR,
+}
+
 export function goAmount(p: Point, d: DIRECTION, rowAmount: number, colAmount: number): Point {
   const delta = Delta[d];
   return { row: p.row + (delta[0] * rowAmount), col: p.col + (delta[1] * colAmount) };
