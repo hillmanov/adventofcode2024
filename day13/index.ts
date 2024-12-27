@@ -21,27 +21,46 @@ async function part1(): Promise<number> {
 
   let totalCost = 0;
   for (const machine of machines) {
-    let lowestCost = Infinity;
-    for(let aPresses = 0; aPresses <= 100; aPresses++) {
-      for (let bPresses = 0; bPresses <= 100; bPresses++) {
-        let x = (aPresses * machine.A.x) + (bPresses * machine.B.x);
-        let y = (aPresses * machine.A.y) + (bPresses * machine.B.y);
-        if (x === machine.Prize.x && y === machine.Prize.y) {
-          lowestCost = Math.min(aPresses * 3 + bPresses, lowestCost);
-        }
-      }
-    }
-    if (lowestCost !== Infinity) {
-      totalCost += lowestCost;
-    }
+    totalCost += cramersRule(machine);
   }
 
   return totalCost;
 }
 
 async function part2(): Promise<number> {
+  const machines = await getInput();
+  for (const machine of machines) {
+    machine.Prize.x += 10000000000000;
+    machine.Prize.y += 10000000000000;
+  }
+    
+  let totalCost = 0;
+  for (const machine of machines) {
+    totalCost += cramersRule(machine);
+  }
 
-  return 0;
+  return totalCost;
+}
+
+function cramersRule(machine: Machine): number {
+  const { A, B, Prize } = machine;
+  const D = A.x * B.y - A.y * B.x;
+  if (D === 0) {
+    return 0;
+  }
+
+  const DX = Prize.x * B.y - Prize.y * B.x;
+  const DY = A.x * Prize.y - A.y * Prize.x;
+
+  const m = DX / D;
+  const n = DY / D;
+
+  if (!Number.isInteger(m) || !Number.isInteger(n)) {
+    return 0;
+  }
+
+  const isValid = (m * D === DX) && (n * D === DY);
+  return isValid ? (3 * m + n) : 0;
 }
 
 async function getInput(): Promise<Machine[]> {
@@ -61,7 +80,7 @@ async function getInput(): Promise<Machine[]> {
 }
 
 const part1Answer = 33921;
-const part2Answer = null;
+const part2Answer = 82261957837868;
 
 export {
   part1,
