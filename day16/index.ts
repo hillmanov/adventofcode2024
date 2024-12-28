@@ -8,10 +8,8 @@ import {
   valueAt,
   encode,
   encodeWithDirection,
-  DirectionChar,
   DIRECTION,
   ORTHOGONAL_DIRECTIONS,
-  OPPOSITE_DIRECTION,
 } from "../utils/grid";
 import PriorityQueue  from "../utils/priorityQueue";
 
@@ -31,28 +29,31 @@ async function part2(): Promise<number> {
   let { lowestCost, pointCosts } = djikstra(start, end, maze, true);
 
   const visited = new Set<number>();
-  const track = (currentPoint: Point, currentDirection: DIRECTION, currentCost: number) => {
-    console.log(`currentPoint`, currentPoint, DirectionChar[currentDirection]);
+  const track = (currentPoint: Point, currentCost: number) => {
+    visited.add(encode(currentPoint));
     if (pointsAreEqual(currentPoint, start)) {
       return
     }
-    for (const nextDirection of ORTHOGONAL_DIRECTIONS) {
-      const nextPoint = go(currentPoint, nextDirection); 
-      let nextCost = currentCost - 1;
-      if (currentDirection !== nextDirection) {
-        nextCost -= 1000;
-      }
 
-      if ((pointCosts.get(encodeWithDirection(nextPoint, nextDirection))) === nextCost) {
-        visited.add(encode(nextPoint));
-        track(nextPoint, nextDirection, nextCost);
+    for (const goDirection of ORTHOGONAL_DIRECTIONS) {
+      const nextPoint = go(currentPoint, goDirection); 
+      let nextCost = currentCost - 1;
+      let nextCostWithTurn = nextCost - 1000;
+      
+      for(const nextDirection of ORTHOGONAL_DIRECTIONS) {
+        const encodedNext = encodeWithDirection(nextPoint, nextDirection);
+
+        if ((pointCosts.get(encodedNext)) === nextCost) {
+          track(nextPoint, nextCost);
+        } 
+        if ((pointCosts.get(encodedNext)) === nextCostWithTurn) {
+          track(nextPoint, nextCostWithTurn);
+        }
       }
     }
   }
 
-  for (const startDirection of ORTHOGONAL_DIRECTIONS) {
-    track(end, startDirection, lowestCost);
-  }
+  track(end, lowestCost);
 
   return visited.size;
 }
@@ -139,7 +140,7 @@ async function getInput(): Promise<maze> {
 }
 
 const part1Answer = 73404;
-const part2Answer = null;
+const part2Answer = 449;
 
 export {
   part1,
