@@ -1,5 +1,5 @@
 import { readLines } from "../utils/io";
-import { type Point, logGrid } from "../utils/grid";
+import { type Point } from "../utils/grid";
 
 type Delta = {
   col: number;

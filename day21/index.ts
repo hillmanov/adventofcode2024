@@ -1,10 +1,8 @@
 import { readLines } from "../utils/io";
 import { 
   type Point,
-  go,
   move,
   DIRECTION,
-  manhattanDistance,
   copyPoint,
   pointsAreEqual,
   DirectionChar,
@@ -40,6 +38,7 @@ type Pad = {
   padType: PadType;
 }
 
+const moveCache = new Map<string, string[]>();
 const moveCountCache = new Map<string, number>();
 
 for (const {padType, pad} of [{ padType: 'numPad' as PadType, pad: numPad }, { padType: 'directionalPad' as PadType, pad: directionalPad }]) {
@@ -73,7 +72,7 @@ async function part1(): Promise<number> {
 
   let sum = 0;
   for(const sequence of sequences) {
-    const moves = trickleDown(sequence.split(''), pads)
+    const moves = getSequenceLength(sequence.split(''), pads)
     const sequenceNumber = parseInt(sequence.replace(/\D/g, ''));
     sum += sequenceNumber * moves.length;
     pads.forEach(pad => pad.currentSymbol = 'A');
@@ -101,10 +100,9 @@ async function part2(): Promise<number> {
     padType: 'directionalPad',
   });
 
-  // Precache the moves from each button to other buttons:
   let sum = 0;
   for(const sequence of sequences) {
-    const moves = trickleDown(sequence.split(''), pads)
+    const moves = getSequenceLength(sequence.split(''), pads)
     const sequenceNumber = parseInt(sequence.replace(/\D/g, ''));
     sum += sequenceNumber * moves.length;
     pads.forEach(pad => pad.currentSymbol = 'A');
@@ -112,7 +110,7 @@ async function part2(): Promise<number> {
   return -1;
 }
 
-function trickleDown (sequence: string[], pads: Pad[], padIndex: number = 0): string[] {
+function getSequenceLength (sequence: string[], pads: Pad[], padIndex: number = 0): number {
   const pad = pads[padIndex];
   const nextSequence: string[] = [];
   for (const targetSymbol of sequence) {
@@ -122,65 +120,18 @@ function trickleDown (sequence: string[], pads: Pad[], padIndex: number = 0): st
     pad.currentSymbol = targetSymbol;
   }
 
-  const noA = nextSequence.filter(s => s !== 'A').length;
-  const yesA = nextSequence.filter(s => s === 'A').length;
   if (padIndex === pads.length - 1) {
-    // console.log(`Just A: ${yesA}, Without A: ${noA}, Total: ${nextSequence.length}, Difference: ${noA - yesA}, Ratio: ${noA / yesA}`);
-    // console.log(`-------------`);
-    return nextSequence;
+    return nextSequence.length;
   } else {
-    // console.log(`Just A: ${yesA}, Without A: ${noA}, Total: ${nextSequence.length}, Difference: ${noA - yesA}, Ratio: ${noA / yesA}`);
-    // console.log(`-------------`);
-    return trickleDown(nextSequence, pads, padIndex + 1);
+    return getSequenceLength(nextSequence, pads, padIndex + 1);
   }
 }
-
-function replayAll(sequence: string) {
-  console.log('Replay');
-  console.log(sequence);
-  let a = replay('directionalPad', sequence.split('')); 
-  console.log(a.join(''));
-  let b = replay('directionalPad', a);
-  console.log(b.join(''));
-  let c = replay('numPad', b);
-  console.log(c.join(''));
-}
-
-
-function replay(padType: PadType, sequence: string[]): string[] {
-  let currentSymbol = 'A';
-  let currentPoint = {...(padType === 'numPad' ? numPad[currentSymbol] : directionalPad[currentSymbol])}
-
-  const result: string[] = [];
-  for(const m of sequence) {
-    switch(m) {
-      case 'A':
-        // Find the symbol on the pad at our current point
-        const symbol = Object.keys(padType === 'numPad' ? numPad : directionalPad).find(key => {
-          const point = padType === 'numPad' ? numPad[key] : directionalPad[key];
-          return point.row === currentPoint.row && point.col === currentPoint.col;
-        });
-        result.push(symbol!);
-        break
-      case '^':
-        move(currentPoint, DIRECTION.U);
-        break;
-      case 'v':
-        move(currentPoint, DIRECTION.D);
-        break;
-      case '<':
-        move(currentPoint, DIRECTION.L);
-        break;
-      case '>':
-        move(currentPoint, DIRECTION.R);
-        break;
-    }
-  }
-  return result;
-}
-
 
 function getMovementsToTarget(padType: PadType, startSymbol: string, targetSymbol: string): string[] {
+  const key = startSymbol + targetSymbol + padType;
+  if (moveCache.has(key)) {
+    return moveCache.get(key)!;
+  }
   const startPoint = padType === 'numPad' ? numPad[startSymbol] : directionalPad[startSymbol];
   const targetPoint = padType === 'numPad' ? numPad[targetSymbol] : directionalPad[targetSymbol];
 
@@ -206,16 +157,10 @@ function getMovementsToTarget(padType: PadType, startSymbol: string, targetSymbo
     deltas.push(DIRECTION.R);
   }
 
-  switch (padType) {
-    case 'numPad':
-      sortWithPriority(deltas, DIRECTION.L);
-      break;
-    case 'directionalPad':
-      sortWithPriority(deltas, DIRECTION.L);
-      break
-  }
+  sortWithPriority(deltas, DIRECTION.L);
 
   const moves = recordMoves(deltas, startPoint, targetPoint, padType);
+  moveCache.set(key, moves);
   return moves;
 }
 
@@ -245,8 +190,8 @@ function recordMoves(deltas: DIRECTION[], startPoint: Point, targetPoint: Point,
       }
     }
   }
-  return moves;
 
+  return moves;
 }
 
 function sortWithPriority(deltas: DIRECTION[], priority: DIRECTION) {
@@ -259,20 +204,6 @@ function sortWithPriority(deltas: DIRECTION[], priority: DIRECTION) {
     }
     return 0;
   })
-}
-
-// Need another sort for directional pads. If we are going multiple steps, and we are closer to the button that makes it go in one direction, be sure to go there first. 
-function sortByClosestButton(moves: string[], currentSymbol: string) {
-  moves.sort((a, b) => {
-    const startPoint = directionalPad[currentSymbol];
-    const aPoint = directionalPad[a];
-    const bPoint = directionalPad[b];
-
-
-    const aDistance = manhattanDistance(aPoint, startPoint);
-    const bDistance = manhattanDistance(bPoint, startPoint);
-    return bDistance - aDistance;
-  });
 }
 
 async function getInput(): Promise<string[]> {

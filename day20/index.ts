@@ -49,6 +49,7 @@ async function part1(): Promise<number> {
   return goodCheats;
 }
 
+// Can I "invert" this? In stead of looking from each part in the path, and doing this massive spotlight check, can I instead look at only points on the path? 
 async function part2(): Promise<number> {
   const track = await getInput();
   const { start } = findStartAndEnd(track);
