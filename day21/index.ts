@@ -34,12 +34,12 @@ const directionalPad: { [key: string]: Point } = {
 }
 
 type Pad = {
-  currentSymbol: string;
   padType: PadType;
 }
 
 const moveCache = new Map<string, string[]>();
 const moveCountCache = new Map<string, number>();
+let keyPadCache = new Map<string, number>();
 
 for (const {padType, pad} of [{ padType: 'numPad' as PadType, pad: numPad }, { padType: 'directionalPad' as PadType, pad: directionalPad }]) {
   for (const startSymbol of Object.keys(pad)) {
@@ -49,82 +49,109 @@ for (const {padType, pad} of [{ padType: 'numPad' as PadType, pad: numPad }, { p
         continue;
       }
       const moves = getMovementsToTarget(padType, startSymbol, targetSymbol);
+      // if (padType=== 'numPad') {
+      //   console.log(`padType, startSymbole, targetSymbol`, padType, startSymbol, targetSymbol, moves);
+      // }
       moveCountCache.set(key, moves.length);
     }
   }
 }
 
 async function part1(): Promise<number> {
+  keyPadCache = new Map<string, number>();
   const sequences = await getInput();
 
   let pads: Pad[] = [
     {
-      currentSymbol: 'A',
       padType: 'numPad',
-    }, {
-      currentSymbol: 'A',
+    }, 
+    {
       padType: 'directionalPad',
-    }, {
-      currentSymbol: 'A',
+    }, 
+    {
       padType: 'directionalPad',
     },
   ];
 
   let sum = 0;
   for(const sequence of sequences) {
-    const moves = getSequenceLength(sequence.split(''), pads)
+    const sequenceLength = getSequenceLength(sequence, pads)
     const sequenceNumber = parseInt(sequence.replace(/\D/g, ''));
-    sum += sequenceNumber * moves.length;
-    pads.forEach(pad => pad.currentSymbol = 'A');
+    sum += sequenceNumber * sequenceLength;
   }
-  return sum;
+  return sum
 }
 
 async function part2(): Promise<number> {
+  keyPadCache = new Map<string, number>();
   const sequences = await getInput();
 
   let pads: Pad[] = [{
-    currentSymbol: 'A',
     padType: 'numPad',
   }];
 
-  times(10, () => {
+  times(24, () => {
     pads.push({
-      currentSymbol: 'A',
       padType: 'directionalPad',
     })
   });
 
   pads.push({
-    currentSymbol: 'A',
     padType: 'directionalPad',
   });
 
+
   let sum = 0;
   for(const sequence of sequences) {
-    const moves = getSequenceLength(sequence.split(''), pads)
+    const sequenceLength = getSequenceLength(sequence, pads)
     const sequenceNumber = parseInt(sequence.replace(/\D/g, ''));
-    sum += sequenceNumber * moves.length;
-    pads.forEach(pad => pad.currentSymbol = 'A');
+    sum += sequenceNumber * sequenceLength;
   }
-  return -1;
+  return sum
 }
 
-function getSequenceLength (sequence: string[], pads: Pad[], padIndex: number = 0): number {
+// Okay - never work on the entire sequence for the current level. 
+// Need to break up the sequence into JUST current, and next
+// At ANY layer, we are simply finding the shortest path between the current and next. 
+// We never will go through the entire sequence
+function getSequenceLength (sequence: string, pads: Pad[], padIndex: number = 0): number {
   const pad = pads[padIndex];
-  const nextSequence: string[] = [];
-  for (const targetSymbol of sequence) {
-    const sequence = getMovementsToTarget(pad.padType, pad.currentSymbol, targetSymbol);
-    nextSequence.push(...sequence);
-    nextSequence.push('A');
-    pad.currentSymbol = targetSymbol;
+
+  if (padIndex === pads.length) {
+    return sequence.length;
   }
 
-  if (padIndex === pads.length - 1) {
-    return nextSequence.length;
-  } else {
-    return getSequenceLength(nextSequence, pads, padIndex + 1);
+  const key = sequence + padIndex;
+  if (keyPadCache.has(key)) {
+    return keyPadCache.get(key)!;
   }
+
+  let total = 0;
+  const subSequences = sequence.replaceAll('A', 'A|').split('|').filter(Boolean);
+  subSequences.forEach(sub => {
+    const nextSequence = buildNextSequence(sub, pad);
+    const subSequenceLength =  getSequenceLength(nextSequence, pads, padIndex + 1);
+    total += subSequenceLength;
+  })
+
+  keyPadCache.set(key, total);
+
+  return total;
+}
+
+function buildNextSequence(sequence: string, pad: Pad): string {
+  sequence = 'A' + sequence;
+  const padType = pad.padType;
+  let nextSequence = '';
+
+  for (let i = 0; i < sequence.length - 1; i++) {
+    const startSymbol = sequence[i];
+    const targetSymbol = sequence[i + 1];
+    const moves = moveCache.get(startSymbol + targetSymbol + padType)!;
+    nextSequence += moves.join('') + 'A';
+  }
+
+  return nextSequence;
 }
 
 function getMovementsToTarget(padType: PadType, startSymbol: string, targetSymbol: string): string[] {
@@ -211,7 +238,7 @@ async function getInput(): Promise<string[]> {
 }
 
 const part1Answer = 123096;
-const part2Answer = null;
+const part2Answer = 154517692795352;
 
 export {
   part1,

@@ -17,8 +17,7 @@ async function part1(): Promise<number> {
 }
 
 async function part2(): Promise<number> {
-  const input = await getInput();
-  return 0;
+  return 1;
 }
 
 function fit(key: Key, lock: Lock): boolean {
@@ -59,7 +58,7 @@ async function getInput(): Promise<{keys: Key[], locks: Lock[]}> {
 }
 
 const part1Answer = 3483;
-const part2Answer = null;
+const part2Answer = 1;
 
 export {
   part1,
