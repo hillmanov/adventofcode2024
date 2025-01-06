@@ -1,11 +1,11 @@
 const std = @import("std");
 
 export fn predictNextSecretNumber(input: u32) u32 {
-    const MASK: u32 = 0xFFFFFF; // 16777215 in decimal
+    const MASK: u32 = 16777216;
     var result = input;
-    result = ((result << 6) ^ result) & MASK;
-    result = ((result >> 5) ^ result) & MASK;
-    result = ((result << 11) ^ result) & MASK;
+    result = ((result * 64) ^ result) % MASK;
+    result = ((result / 32) ^ result) % MASK;
+    result = ((result * 2048) ^ result) % MASK;
     return result;
 }
 
